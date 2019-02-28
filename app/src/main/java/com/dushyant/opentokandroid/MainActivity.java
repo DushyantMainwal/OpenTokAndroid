@@ -3,6 +3,7 @@ package com.dushyant.opentokandroid;
 import android.Manifest;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -41,6 +42,8 @@ public class MainActivity extends AppCompatActivity
     private Session mSession;
     private Publisher mPublisher;
     private Subscriber mSubscriber;
+
+    private ScreenSharingFragment mScreensharingFragment;
 
     private RelativeLayout mPublisherViewContainer;
 //    private WebView mWebViewContainer;
@@ -125,35 +128,91 @@ public class MainActivity extends AppCompatActivity
             mSession.setSessionListener(this);
             mSession.connect(OpenTokConfig.TOKEN);
         } else {
-            EasyPermissions.requestPermissions(this, getString(R.string.rationale_video_app), RC_VIDEO_APP_PERM, perms);
+            EasyPermissions.requestPermissions(this, getString(R.string.rationale_video_app),
+                    RC_VIDEO_APP_PERM, perms);
         }
     }
+
+    ScreenSharingFragment.ScreenSharingListener screenListener = new ScreenSharingFragment.ScreenSharingListener() {
+        @Override
+        public void onScreenCapturerReady() {
+            ScreenSharingCapturer1 capturer = mScreensharingFragment.getScreenCapturer();
+
+            if (capturer != null) {
+                mPublisher = new Publisher.Builder(MainActivity.this)
+                        .name("publisher")
+                        .capturer(capturer)
+                        .build();
+                mPublisher.setPublisherListener(MainActivity.this);
+                mPublisher.setPublisherVideoType(PublisherKit.PublisherKitVideoType.PublisherKitVideoTypeScreen);
+
+                //byDefault
+                mPublisher.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE,
+                        BaseVideoRenderer.STYLE_VIDEO_FILL);
+//                attachPublisherScreenView();
+                mSession.publish(mPublisher);
+            }
+        }
+
+        @Override
+        public void onError(String errorMsg) {
+
+        }
+    };
+
 
     @Override
     public void onConnected(Session session) {
         Log.d(TAG, "onConnected: Connected to session " + session.getSessionId());
-        ScreensharingCapturer screenCapturer = new ScreensharingCapturer(MainActivity.this, getWindow().getDecorView());
+        mScreensharingFragment = ScreenSharingFragment.newInstance();
+        getSupportFragmentManager().beginTransaction()
+                .add(mScreensharingFragment, "screensharing-fragment").commit();
+        mScreensharingFragment.setListener(screenListener);
 
-        mPublisher = new Publisher.Builder(MainActivity.this)
-                .name("publisher")
-                .capturer(screenCapturer)
-                .build();
-        mPublisher.setPublisherListener(this);
-        mPublisher.setPublisherVideoType(PublisherKit.PublisherKitVideoType.PublisherKitVideoTypeScreen);
-        mPublisher.setAudioFallbackEnabled(false);
-        mPublisher.setPublishAudio(false);
-
-//        mWebViewContainer.setWebViewClient(new WebViewClient());
-//        WebSettings webSettings = mWebViewContainer.getSettings();
-//        webSettings.setJavaScriptEnabled(true);
-//        mWebViewContainer.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-//        mWebViewContainer.loadUrl("http://www.tokbox.com");
-
-        mPublisher.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
-//        mPublisherViewContainer.addView(mPublisher.getView());
-
-        mSession.publish(mPublisher);
+//        ScreensharingCapturer screenCapturer = new ScreensharingCapturer(MainActivity.this, getWindow().getDecorView());
+//
+//        mPublisher = new Publisher.Builder(MainActivity.this)
+//                .name("publisher")
+//                .capturer(screenCapturer)
+//                .build();
+//        mPublisher.setPublisherListener(this);
+//        mPublisher.setPublisherVideoType(PublisherKit.PublisherKitVideoType.PublisherKitVideoTypeScreen);
+//        mPublisher.setAudioFallbackEnabled(false);
+//        mPublisher.setPublishAudio(false);
+//
+//        //byDefault
+//        mPublisher.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE,
+//                BaseVideoRenderer.STYLE_VIDEO_FILL);
+//
+//        mPublisher.setPublisherListener(new PublisherKit.PublisherListener() {
+//            @Override
+//            public void onStreamCreated(PublisherKit publisherKit, Stream stream) {
+//
+//            }
+//
+//            @Override
+//            public void onStreamDestroyed(PublisherKit publisherKit, Stream stream) {
+//
+//            }
+//
+//            @Override
+//            public void onError(PublisherKit publisherKit, OpentokError opentokError) {
+//
+//            }
+//        });
+//
+////        mWebViewContainer.setWebViewClient(new WebViewClient());
+////        WebSettings webSettings = mWebViewContainer.getSettings();
+////        webSettings.setJavaScriptEnabled(true);
+////        mWebViewContainer.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+////        mWebViewContainer.loadUrl("http://www.tokbox.com");
+//
+//        mPublisher.setStyle(BaseVideoRenderer.STYLE_VIDEO_SCALE, BaseVideoRenderer.STYLE_VIDEO_FILL);
+////        mPublisherViewContainer.addView(mPublisher.getView());
+//
+//        mSession.publish(mPublisher);
     }
+
 
     @Override
     public void onDisconnected(Session session) {

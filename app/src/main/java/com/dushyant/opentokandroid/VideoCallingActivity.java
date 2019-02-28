@@ -22,10 +22,10 @@ public class VideoCallingActivity extends AppCompatActivity implements Session.S
     private static final String LOG_TAG = VideoCallingActivity.class.getSimpleName();
     private static final int RC_SETTINGS_SCREEN_PERM = 123;
     private static final int RC_VIDEO_APP_PERM = 124;
-    private static String API_KEY = "";
-    private static String API_SECRET = "";
-    private static String SESSION_ID = "";
-    private static String TOKEN = "";
+//    private static String API_KEY = "";
+//    private static String API_SECRET = "";
+//    private static String SESSION_ID = "";
+//    private static String TOKEN = "";
     private Session mSession;
 
     private FrameLayout mPublisherViewContainer;
@@ -36,7 +36,7 @@ public class VideoCallingActivity extends AppCompatActivity implements Session.S
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_video_call);
 
         requestPermissions();
     }
@@ -57,12 +57,13 @@ public class VideoCallingActivity extends AppCompatActivity implements Session.S
             mSubscriberViewContainer = (FrameLayout) findViewById(R.id.subscriber_container);
 
             // initialize and connect to the session
-            mSession = new Session.Builder(this, API_KEY, SESSION_ID).build();
+            mSession = new Session.Builder(this, OpenTokConfig.API_KEY, OpenTokConfig.SESSION_ID).build();
             mSession.setSessionListener(this);
-            mSession.connect(TOKEN);
+            mSession.connect(OpenTokConfig.TOKEN);
 
         } else {
-            EasyPermissions.requestPermissions(this, "This app needs access to your camera and mic to make video calls", RC_VIDEO_APP_PERM, perms);
+            EasyPermissions.requestPermissions(this, "This app needs access to your camera and mic to make video calls",
+                    RC_VIDEO_APP_PERM, perms);
         }
     }
 
@@ -72,6 +73,8 @@ public class VideoCallingActivity extends AppCompatActivity implements Session.S
 
         mPublisher = new Publisher.Builder(this).build();
         mPublisher.setPublisherListener(this);
+        mPublisher.setAudioFallbackEnabled(false);
+        mPublisher.setPublishAudio(false);
 
         mPublisherViewContainer.addView(mPublisher.getView());
         mSession.publish(mPublisher);
